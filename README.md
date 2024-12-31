@@ -1,77 +1,29 @@
-# **LMS**
+# Lead Management System
 
-This project is a comprehensive **Learning Management System (LMS)** designed to streamline online education for both administrators and users. Built using modern web development technologies, the LMS provides an intuitive interface and robust features to support course creation, management, and learning experiences.
+A simple and scalable Lead Management System built using **React**, **Redux**, **Node.js**, and **MongoDB**. This system allows sales and marketing teams to track, manage, and update leads through a user-friendly interface, with features like adding, updating, and deleting leads, assigning status, adding comments, and more.
 
----
+## Features
 
-## **Key Features**
+- **Lead Management**: Track and manage leads with essential information like name, email, phone, source, and status.
+- **Lead Status Update**: Update lead statuses (New, Contacted, Qualified, Lost, Won).
+- **Comments Section**: Add and view comments for each lead.
+- **Tags**: Assign tags to leads for better organization and categorization.
+- **Pagination**: View and manage comments with pagination and a "Show More" feature.
+- **Authentication & Authorization**: Secure login and restricted access based on user roles.
+- **Real-time Updates**: Status updates and changes to lead details are reflected in real time.
 
-### 1. **Authentication & Authorization**
-- User login/signup functionality with secure authentication.  
-- Role-based access control for administrators, instructors, and learners.  
+## Tech Stack
 
-### 2. **Course Management**
-- Admin dashboard for creating, editing, and managing courses.  
-- Features for uploading lectures, managing course details, and setting publication status.  
-- Integration with **Multer** and **Cloudinary** for media uploads.  
+- **Frontend**:
+  - React.js
+  - Redux for state management
+  - Shadcn and Tailwind CSS for styling
+  - React Router for navigation
 
-### 3. **User Profiles**
-- Personalized user profiles with update and edit options.  
-- Tracking of purchased courses and learning progress.  
+- **Backend**:
+  - Node.js
+  - Express.js
+  - MongoDB (for storing lead and comment data)
 
-### 4. **Frontend Design**
-- Clean and responsive UI built with **Shadcn UI**.  
-- Pages for the navbar, hero section, and dynamic course-related content.  
-- Support for **light/dark mode** for enhanced user experience.  
-
-### 5. **Backend Setup**
-- Backend API using **Node.js** and **Express** with RESTful controllers.  
-- Database integration with **MongoDB** for user and course data management.  
-- Integration with **Redux Toolkit Query (RTK Query)** for efficient state management.  
-
-### 6. **Course Operations**
-- Adding and editing course details, including lecture uploads and updates.  
-- Fetching and displaying courses based on admin/user roles.  
-
-### 7. **Payment & Purchases**
-- Seamless course purchase flow using **Stripe** for payment processing.  
-- Webhook implementation for managing purchase transactions.  
-
-### 8. **Interactive Learning**
-- User-friendly interface for accessing purchased courses and tracking learning progress.  
-- Support for filtering and searching courses.  
-
-### 9. **Advanced Features**
-- Protected routes ensuring secure access to critical pages.  
-- Dynamic routing using **React Router Dom**.  
-- Support for publishing/unpublishing courses with status updates.  
-
----
-
-## **Tech Stack**
-
-### **Frontend:**
-- React.js  
-- Redux Toolkit  
-- Shadcn UI  
-- React Router Dom  
-
-### **Backend:**
-- Node.js  
-- Express.js  
-
-### **Database:**
-- MongoDB  
-
-### **State Management:**
-- Redux Toolkit (RTK Query)  
-
-### **File Storage:**
-- Multer  
-- Cloudinary  
-
-### **Payment Gateway:**
-- Stripe  
-
-### **Version Control:**
-- Git  
+- **Authentication**:
+  - JWT-based Authentication
