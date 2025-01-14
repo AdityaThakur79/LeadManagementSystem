@@ -20,8 +20,8 @@ export const commentApi = createApi({
       invalidatesTags: ["Refetch_Comments"],
     }),
     getCommentsByCourse: builder.query({
-      query: (leadId) => ({
-        url: `/${leadId}/comments`,
+      query: ({ leadId, page, limit }) => ({
+        url: `/${leadId}/comments?page=${page}&limit=${limit}`,
         method: "GET",
       }),
       providesTags: ["Refetch_Comments"],
@@ -30,7 +30,15 @@ export const commentApi = createApi({
       query: (commentId) => ({
         url: `/delete/${commentId}`,
         method: "DELETE",
-        body:{commentId}
+        body: { commentId },
+      }),
+      invalidatesTags: ["Refetch_Comments"],
+    }),
+    editComment: builder.mutation({
+      query: ({ content, commentId }) => ({
+        url: `/edit/${commentId}`,
+        method: "POST",
+        body: { content },
       }),
       invalidatesTags: ["Refetch_Comments"],
     }),
@@ -41,4 +49,5 @@ export const {
   useCreateCommentMutation,
   useGetCommentsByCourseQuery,
   useDeleteCommentMutation,
+  useEditCommentMutation,
 } = commentApi;

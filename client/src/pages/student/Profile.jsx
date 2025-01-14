@@ -94,7 +94,7 @@ const Profile = () => {
                         <h1 className="font-semibold text-gray-900 dark:text-gray-100 ">
                             Name:
                             <span className="font-normal text-gray-700 dark:text-gray-300 ml-2">
-                                {user.name}
+                                {user?.name}
                             </span>
                         </h1>
                     </div>
@@ -102,7 +102,7 @@ const Profile = () => {
                         <h1 className="font-semibold text-gray-900 dark:text-gray-100 ">
                             Email:
                             <span className="font-normal text-gray-700 dark:text-gray-300 ml-2">
-                                {user.email}
+                                {user?.email}
                             </span>
                         </h1>
                     </div>
@@ -110,7 +110,15 @@ const Profile = () => {
                         <h1 className="font-semibold text-gray-900 dark:text-gray-100 ">
                             Role:
                             <span className="font-normal text-gray-700 dark:text-gray-300 ml-2">
-                                {user.role.toUpperCase()}
+                                {user?.role?.toUpperCase()}
+                            </span>
+                        </h1>
+                    </div>
+                    <div className="mb-2">
+                        <h1 className="font-semibold text-gray-900 dark:text-gray-100 ">
+                            Status:
+                            <span className="font-normal text-gray-700 dark:text-gray-300 ml-2">
+                                {user?.status === false ? "Deactive" : "Active"}
                             </span>
                         </h1>
                     </div>
@@ -122,6 +130,7 @@ const Profile = () => {
                                 Edit Profile
                             </Button>
                         </DialogTrigger>
+
                         <DialogContent>
                             <DialogHeader>
                                 <DialogTitle>Edit Profile</DialogTitle>
@@ -136,7 +145,7 @@ const Profile = () => {
                                     <Input
                                         type="text"
                                         value={name}
-                                        onChange={(e) => setName(e.target.value)}
+                                        onChange={(e) => setName(e?.target?.value)}
                                         placeholder="Name"
                                         className="col-span-3"
                                     />
@@ -168,12 +177,15 @@ const Profile = () => {
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
-
+                    <div className="mb-2 mt-4 text-center">
+                        <h1 className="font-semibold text-gray-900 dark:text-gray-100 ">
+                            <h1 className="font-normal text-gray-700 dark:text-gray-300 ml-2">
+                                {user?.status === false ? "Your account is deactivated. Please contact support for assistance." : ""}
+                            </h1>
+                        </h1>
+                    </div>
                 </div>
             </div>
-
-            {/* Courses Enrolled In */}
-            
         </div>
     )
 }

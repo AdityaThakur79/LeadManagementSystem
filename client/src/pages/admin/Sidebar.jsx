@@ -80,16 +80,16 @@ const Sidebar = () => {
               <h1>Activity Log</h1>
             </Link>
           )}
-          {userRole === "superAdmin" && (
+          {/* {userRole === "superAdmin" && (
             <Link
-              to="agent-performance" // Link to activity log page
+              to="agent-performance" 
               className="flex items-center gap-2 hover:text-blue-600 dark:hover:text-blue-400"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              <Trophy size={22} /> {/* Icon for Activity Log */}
+              <Trophy size={22} />  
               <h1>Agent Performance</h1>
             </Link>
-          )}
+          )} */}
 
         </div>
       </div>

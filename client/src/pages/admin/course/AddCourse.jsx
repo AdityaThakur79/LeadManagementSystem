@@ -47,7 +47,7 @@ const AddCourse = () => {
             navigate("/admin/course");
         }
         if (error) {
-            toast.error(error?.data?.message || "Failed to create user");
+            toast.error(error?.data?.details[0]?.message || "Failed to create user");
         }
     }, [isSuccess, error]);
 
@@ -126,7 +126,7 @@ const AddCourse = () => {
 
                 {/* Action Buttons */}
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" onClick={() => navigate("/admin/users")}>
+                    <Button variant="outline" onClick={() => navigate("/admin/course")}>
                         Back
                     </Button>
                     <Button disabled={isLoading} onClick={createUserHandler}>

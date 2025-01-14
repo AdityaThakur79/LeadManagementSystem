@@ -22,7 +22,8 @@ const AddTag = () => {
             toast.success(data?.message || "Tag Created Successfully");
             navigate("/admin/tag");
         } else if (error) {
-            toast.error(error?.data?.message || "Failed to create tag");
+            console.log(error)
+            toast.error(error?.data?.details[0]?.message || "Failed to create tag");
         }
     }, [isSuccess, error]);
 

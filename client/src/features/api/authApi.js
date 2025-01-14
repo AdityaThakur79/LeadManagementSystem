@@ -17,6 +17,13 @@ export const authApi = createApi({
         body: inputData,
       }),
     }),
+    verifyOTP: builder.mutation({
+      query: ({ email, otp }) => ({
+        url: "verify-otp",
+        method: "POST",
+        body: { email, otp },
+      }),
+    }),
     forgotPassword: builder.mutation({
       query: (inputData) => ({
         url: "forgotpassword",
@@ -83,11 +90,11 @@ export const authApi = createApi({
       }),
     }),
     getAllUsers: builder.query({
-      query: () => ({
-        url: "/",
+      query: ({ page, limit }) => ({
+        url: `/?page=${page}&limit=${limit}`,
         method: "GET",
       }),
-      provideTags:["User"]
+      provideTags: ["User"],
     }),
 
     // Update User
@@ -118,6 +125,7 @@ export const authApi = createApi({
 
 export const {
   useRegisterUserMutation,
+  useVerifyOTPMutation,
   useForgotPasswordMutation,
   useLoginUserMutation,
   useLogoutUserMutation,
@@ -128,5 +136,5 @@ export const {
   useGetAllUsersQuery,
   useUpdateCreatedUserMutation,
   useFetchUserByIdQuery,
-  useGetSupportAgentsQuery
+  useGetSupportAgentsQuery,
 } = authApi;

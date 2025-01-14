@@ -15,26 +15,13 @@ export const activityApi = createApi({
   endpoints: (builder) => ({
     // Get recent activity logs
     getActivityLog: builder.query({
-      query: () => ({
-        url: "/activity-log", // The API route for activity logs
+      query: ({ page, limit }) => ({
+        url: `/activity-log?page=${page}&limit=${limit}`,
         method: "GET",
       }),
-      providesTags: ["ActivityLog"], // Cache data with this tag
-    }),
-
-    // Create a new activity log
-    createActivityLog: builder.mutation({
-      query: (logData) => ({
-        url: "/activity-log",
-        method: "POST",
-        body: logData,
-      }),
-      invalidatesTags: ["ActivityLog"], // Invalidate cache so data can be refreshed
+      invalidatesTags: ["ActivityLog"],
     }),
   }),
 });
 
-export const {
-  useGetActivityLogQuery, // Hook for querying activity logs
-  useCreateActivityLogMutation, // Hook for creating an activity log
-} = activityApi;
+export const { useGetActivityLogQuery } = activityApi;

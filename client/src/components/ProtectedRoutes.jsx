@@ -24,3 +24,13 @@ export const AdminRoute = ({ children }) => {
 
     return children;
 }
+
+export const DeactiveUserRoute = ({ component: Component, userStatus }) => {
+    if (userStatus === "deactivated") {
+        return <Navigate to="/403" />;
+    }
+
+    return <Component />;
+};
+
+export default DeactiveUserRoute;

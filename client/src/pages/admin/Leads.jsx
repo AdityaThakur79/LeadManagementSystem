@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGetAllLeadsQuery, useGetLeadsAssignedToUserQuery } from '@/features/api/leadApi.js';
+import { useGetAllLeadsQuery } from '@/features/api/leadApi.js';
 import { selectUserId } from '@/features/authSlice.js';
 import Lead from './Lead.jsx';
 import { Input } from "@/components/ui/input";
@@ -11,14 +11,14 @@ import "react-datepicker/dist/react-datepicker.css";
 import { useGetAllTagsQuery } from '@/features/api/tagApi.js';
 
 const Leads = () => {
-    
+
     const userId = useSelector(selectUserId);
 
     // Filter state
     const [filters, setFilters] = useState({
         search: '',
-        status: 'all', // Default to "all"
-        tags: 'all', // Default to "all"
+        status: 'all',  
+        tags: 'all',  
         startDate: null,
         endDate: null,
     });
@@ -28,30 +28,30 @@ const Leads = () => {
     const leadsPerPage = 8;
 
     // Fetch leads and tags
-    const { data, isLoading, error } = useGetAllLeadsQuery();
-    const { data: tagsData, isLoading: isTagsLoading, error: tagsError } = useGetAllTagsQuery();
-
+    const { data: tagsData, isLoading: isTagsLoading, error: tagsError } = useGetAllTagsQuery({ page: 1, limit: 50 });
+    const { data, isLoading, error } = useGetAllLeadsQuery( {page:currentPage , limit:leadsPerPage});
+    
     // Handle filters
     const filteredLeads = data?.leads?.filter((lead) => {
         const matchesSearch =
-            lead.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-            lead.email.toLowerCase().includes(filters.search.toLowerCase()) ||
-            lead.phone.includes(filters.search);
-
+        lead.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+        lead.email.toLowerCase().includes(filters.search.toLowerCase()) ||
+        lead.phone.includes(filters.search);
+        
         const matchesStatus = filters.status === 'all' || lead.status === filters.status;
-
+        
         const matchesTags = filters.tags === 'all' || lead.tags.includes(filters.tags);
-
+        
         const matchesDateRange = (!filters.startDate || new Date(lead.date) >= filters.startDate) &&
-            (!filters.endDate || new Date(lead.date) <= filters.endDate);
-
+        (!filters.endDate || new Date(lead.date) <= filters.endDate);
+        
         return matchesSearch && matchesStatus && matchesTags && matchesDateRange;
     });
-
+    
     // Calculate leads to display on the current page
-    const indexOfLastLead = currentPage * leadsPerPage;
-    const indexOfFirstLead = indexOfLastLead - leadsPerPage;
-    const currentLeads = filteredLeads?.slice(indexOfFirstLead, indexOfLastLead);
+    // const indexOfLastLead = currentPage * leadsPerPage;
+    // const indexOfFirstLead = indexOfLastLead - leadsPerPage;
+    // const currentLeads = filteredLeads?.slice(indexOfFirstLead, indexOfLastLead);
 
     const handleFilterChange = (key, value) => {
         setFilters((prev) => ({ ...prev, [key]: value }));
@@ -61,7 +61,7 @@ const Leads = () => {
         setCurrentPage(pageNumber);
     };
 
-    const totalPages = Math.ceil(filteredLeads?.length / leadsPerPage);
+    const totalPages = Math.ceil(data.totalLeads / leadsPerPage);
 
     if (error) {
         return <div className="text-center text-red-500">Failed to load leads</div>;
@@ -152,7 +152,7 @@ const Leads = () => {
                     {isLoading ? (
                         Array.from({ length: 8 }).map((_, index) => <LeadSkeleton key={index} />)
                     ) : (
-                        currentLeads?.map((lead) => <Lead key={lead._id} lead={lead} />)
+                        data?.leads?.map((lead) => <Lead key={lead._id} lead={lead} />)
                     )}
                 </div>
 

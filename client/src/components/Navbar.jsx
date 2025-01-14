@@ -85,6 +85,13 @@ const Navbar = () => {
                                             <Link to="/admin/dashboard">Dashboard</Link>
                                         </DropdownMenuItem>
                                     )}
+                                {
+                                    user.role == "superAdmin" && (
+                                        <DropdownMenuItem>
+                                            <Link to="/allleads">All Leads</Link>
+                                        </DropdownMenuItem>
+                                    )}
+
 
                             </DropdownMenuGroup>
                             <DropdownMenuSeparator />

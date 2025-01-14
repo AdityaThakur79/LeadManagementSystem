@@ -44,20 +44,20 @@ app.use("/api/tag", tagRoutes);
 app.use("/api/lead", leadRoutes);
 app.use("/api/comment", commentRoutes);
 app.use("/api", activityRoutes);
-app.use("/api", agentPerformanceRoutes);
+// app.use("/api", agentPerformanceRoutes);
 
 // Get the current file path
-const __filename = fileURLToPath(import.meta.url);
+// const __filename = fileURLToPath(import.meta.url);
 // Get the directory name
-const __dirname = path.dirname(__filename);
+// const __dirname = path.dirname(__filename);
 
 // Serve static files from the assets folder
-app.use(express.static(path.join(__dirname, "./client/dist")));
+// app.use(express.static(path.join(__dirname, "./client/dist")));
 
 // Route to serve `index.html`
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "./client/dist/index.html"));
-});
+// app.get("*", (req, res) => {
+//   res.sendFile(path.join(__dirname, "./client/dist/index.html"));
+// });
 
 const PORT = process.env.PORT || 8080;
 

@@ -7,13 +7,17 @@ const activityLogSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    action: { type: String, required: true },
+    action: {
+      type: String,
+      enum: ["created", "updated", "deleted"],
+      required: true,
+    },
+    details: { type: String },
     leadId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Lead",
-      required: true,
     },
-    timestamp: { type: Date, default: Date.now },
+    createdAt: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );

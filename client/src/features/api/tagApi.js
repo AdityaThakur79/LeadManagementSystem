@@ -22,8 +22,8 @@ export const tagApi = createApi({
 
     // Get all tags
     getAllTags: builder.query({
-      query: () => ({
-        url: "/tags",
+      query: ({page,limit}) => ({
+        url: `/tags?page=${page}&limit=${limit}`,
         method: "GET",
       }),
       providesTags: ["Refetch_Tag"],

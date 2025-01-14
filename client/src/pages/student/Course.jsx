@@ -6,7 +6,6 @@ import { Link } from 'react-router-dom';
 
 const Lead = ({ lead }) => {
   const leadId = lead._id;
-  console.log(lead)
     return (
         <Link to ={ `/lead-detail/${leadId}`} >
             <div className="bg-white shadow-md hover:shadow-lg transition-shadow rounded-lg overflow-hidden">

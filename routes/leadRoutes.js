@@ -8,18 +8,19 @@ import {
   updateLead,
   updateLeadStatus,
 } from "../controllers/leadController.js";
+import isAuthenticated from "../middlewares/isAuthenticated.js";
 const router = express.Router();
 
 // POST /leads
-router.post("/leads", createLead);
+router.post("/leads",isAuthenticated, createLead);
 
 // Route to update a lead by ID
 // PUT /leads/:id
-router.put("/leads/:id", updateLead);
+router.put("/leads/:id",isAuthenticated, updateLead);
 
 // Route to delete a lead by ID
 // DELETE /leads/:id
-router.delete("/leads/:id", deleteLead);
+router.delete("/leads/:id",isAuthenticated, deleteLead);
 
 // Route to get all leads
 // GET /leads
@@ -31,6 +32,6 @@ router.get("/leads/:id", getLeadById);
 
 router.get("/leads/assigned/:userId",getLeadsAssignedToUser)
 
-router.put("/leads/:leadId/status", updateLeadStatus);
+router.put("/leads/:leadId/status",isAuthenticated, updateLeadStatus);
 
 export default router;

@@ -1,32 +1,67 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { BadgeInfo } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useGetLeadByIdQuery, useUpdateLeadMutation, useUpdateLeadStatusMutation } from '@/features/api/leadApi'; // Custom hook to fetch lead details and update
-import { useCreateCommentMutation, useDeleteCommentMutation, useGetCommentsByCourseQuery } from "@/features/api/commentApi";
-import { Avatar, AvatarFallback, AvatarImage } from "@radix-ui/react-avatar";
+import { useGetLeadByIdQuery, useUpdateLeadMutation, useUpdateLeadStatusMutation } from '@/features/api/leadApi';
+import { useCreateCommentMutation, useDeleteCommentMutation, useEditCommentMutation, useGetCommentsByCourseQuery } from "@/features/api/commentApi";
 import { toast } from "sonner";
-
+import { format, formatDistanceToNow, formatRelative } from 'date-fns';
+import { useDispatch, useSelector } from "react-redux";
+import { Badge } from "@/components/ui/badge";
+import { BadgeInfo, Edit, Trash } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle } from "@radix-ui/react-dialog";
 
 const LeadDetail = () => {
+    const dispatch = useDispatch();
+    const { user } = useSelector(store => store.auth)
     const params = useParams();
     const leadId = params.leadId;
     const navigate = useNavigate();
 
-
     // Fetch lead data
     const { data, isLoading, isError } = useGetLeadByIdQuery(leadId);
     const [updateLeadStatusMutation, { isLoading: isUpdating, isError: isUpdatingError }] = useUpdateLeadStatusMutation(); // Mutation hook to update lead
+    const [updateLead] = useUpdateLeadMutation();
+
+    const [newStatus, setNewStatus] = useState(data?.lead?.status || "New");
 
     const [newComment, setNewComment] = useState("");
-    const [newStatus, setNewStatus] = useState(data?.lead?.status || "New");
-    const { data: commentsData, isLoading: commentsLoading, isError: commentsError } = useGetCommentsByCourseQuery(leadId);
     const [createComment] = useCreateCommentMutation();
     const [deleteComment] = useDeleteCommentMutation();
+    //Edit Comment
+    const [isEditDialogOpen, setEditDialogOpen] = useState();
+    const [editedComment, setEditedComment] = useState("");
+    const [editComment] = useEditCommentMutation();
 
-    const [updateLead] = useUpdateLeadMutation();
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [expandedComments, setExpandedComments] = useState([]);
+    const commentsPerPage = 5;
+    const { data: commentsData, isLoading: commentsLoading, isError: commentsError } = useGetCommentsByCourseQuery({ leadId, page: currentPage, limit: commentsPerPage });
+    const totalComments = commentsData?.totalComments || 0;
+    const totalPages = Math.ceil(totalComments / commentsPerPage);
+
+    const handleNextPage = () => {
+        if (currentPage < totalPages) {
+            setCurrentPage((prev) => prev + 1);
+        }
+    };
+
+    const handlePrevPage = () => {
+        if (currentPage > 1) {
+            setCurrentPage((prev) => prev - 1);
+        }
+    };
+
+    const toggleExpandComment = (commentId) => {
+        setExpandedComments(prevState =>
+            prevState.includes(commentId)
+                ? prevState.filter(id => id !== commentId)
+                : [...prevState, commentId]
+        );
+    };
+
 
     // Handle loading and error states
     if (isLoading) return <h1>Loading...</h1>;
@@ -50,6 +85,29 @@ const LeadDetail = () => {
             console.error("Error deleting comment:", error);
         }
     };
+
+    const handleCommentUpdate = async (commentId) => {
+        try {
+            // Call the editComment mutation
+            await editComment({ content: editedComment, commentId });
+
+            // Clear the editedComment state
+            setEditedComment("");
+
+            // Close the edit dialog or handle any other UI updates needed
+            setEditDialogOpen(false);
+
+            // Show success message
+            toast.success("Comment updated successfully");
+
+        } catch (error) {
+            console.error("Error updating comment:", error);
+            toast.error("Failed to update comment");
+        }
+    };
+
+
+
     // Safely access lead data
     const lead = data?.lead;
 
@@ -83,7 +141,7 @@ const LeadDetail = () => {
                     <h1 className="font-bold text-2xl md:text-3xl">{lead?.name}</h1>
                     <p className="text-base md:text-lg">{lead?.email}</p>
                     <div className="flex items-center gap-2 text-sm">
-                        <BadgeInfo size={16} />
+                        <BadgeInfo size={16} />  {lead.createdAt ? format(new Date(lead.createdAt), 'dd/MM/yyyy') : "N/A"}
                     </div>
                     <p>Status: {lead?.status}</p>
                     <p>Source: {lead?.source}</p>
@@ -125,25 +183,134 @@ const LeadDetail = () => {
                         {commentsLoading ? (
                             <p>Loading comments...</p>
                         ) : commentsData?.comments?.length > 0 ? (
-                            <div className="mt-4 space-y-4">
+                            <div className="mt-6 space-y-4">
                                 {commentsData.comments.map((comment) => (
                                     <div key={comment._id} className="border-b pb-4">
-                                        <div className="flex items-start gap-4">
-                                            <Avatar className="h-12 w-12 rounded-full">
-                                                <AvatarImage src={comment.creator.photoUrl || "https://github.com/shadcn.png"} alt="author" />
-                                                <AvatarFallback>CN</AvatarFallback>
-                                            </Avatar>
-                                            <div>
-                                                <span className="font-semibold text-gray-800">{comment.creator.name}</span>
-                                                <p className="text-white">{comment.content}</p>
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex gap-4">
+                                                {/* Creator Image */}
+                                                <div
+                                                    style={{
+                                                        height: "48px",
+                                                        width: "48px",
+                                                        borderRadius: "50%",
+                                                        overflow: "hidden",
+                                                    }}
+                                                >
+                                                    <img
+                                                        src={comment.creator.photoUrl || "https://github.com/shadcn.png"}
+                                                        alt="author"
+                                                        style={{
+                                                            width: "100%",
+                                                            height: "100%",
+                                                            objectFit: "cover",
+                                                            borderRadius: "50%",
+                                                        }}
+                                                    />
+                                                </div>
+                                                {/* Name and Date */}
+                                                <div className="flex items-center space-x-2 justify-center">
+                                                    <span className="font-semibold text-white-400">{comment.creator.name}</span>
+                                                    <Badge className='bg-gray-500 text-white-500'>{comment.creator.role}</Badge>
+
+                                                    <span className="text-sm text-gray-500">
+                                                        {comment.createdAt ?  `${formatDistanceToNow(new Date(comment.createdAt))} ago` : 'N/A'}
+                                                    </span>
+                                                </div>
+
                                             </div>
-                                            <Button onClick={() => handleCommentDelete(comment._id)} className="text-red-600">Delete</Button>
+                                            {/* Delete Button */}
+                                            {comment.creator._id === user?._id && (
+                                                <>
+                                                    <Button onClick={() => handleCommentDelete(comment._id)} className="text-red-600">
+                                                        <Trash />
+                                                    </Button>
+
+
+                                                    {/* <Button onClick={() => setEditDialogOpen(true)} className="text-blue-600">
+                                                        <Edit />
+                                                    </Button> */}
+
+                                                    {/* {isEditDialogOpen && (
+                                                        <Dialog open={isEditDialogOpen} onOpenChange={setEditDialogOpen} maxWidth="sm" fullWidth>
+                                                            <Dialog.Header>Edit Comment</Dialog.Header>
+                                                            <Dialog.Content>
+                                                                <Textarea
+                                                                    value={editedComment}
+                                                                    onChange={(e) => setEditedComment(e.target.value)}
+                                                                    placeholder="Update your comment here"
+                                                                    multiline
+                                                                    fullWidth
+                                                                />
+                                                            </Dialog.Content>
+                                                            <Dialog.Footer>
+                                                                <Button variant="ghost" onClick={() => setEditDialogOpen(false)}>
+                                                                    Cancel
+                                                                </Button>
+                                                                <Button
+                                                                    onClick={() => {
+                                                                        dispatch(updateComment({ id: comment._id, content: editedComment }));
+                                                                        setEditDialogOpen(false);
+                                                                    }}
+                                                                >
+                                                                    Update Comment
+                                                                </Button>
+                                                            </Dialog.Footer>
+                                                        </Dialog>
+                                                    )} */}
+                                                </>
+                                            )}
+
+
                                         </div>
+                                        {/* Comment Content */}
+                                        <p className="mt-2 text-white-400">
+
+                                            {
+                                                expandedComments.includes(comment._id)
+                                                    ? comment.content
+                                                    : `${comment.content.substring(0, 110)}`
+                                            }
+                                            {comment.content.length > 110 && (
+                                                <Button
+                                                    onClick={() => toggleExpandComment(comment._id)}
+                                                    className="text-blue-600 text-sm ml-2 bg-gray-500 text-white-400"
+                                                >
+                                                    {expandedComments.includes(comment._id) ? 'Show Less' : 'Show More'}
+                                                </Button>
+                                            )}
+
+                                        </p>
+
                                     </div>
                                 ))}
                             </div>
+
+
                         ) : (
                             <p className="mt-4">No comments yet.</p>
+                        )}
+
+                        {totalPages > 1 && (
+                            <div className="flex justify-between mt-4">
+                                <Button
+                                    onClick={handlePrevPage}
+                                    disabled={currentPage === 1}
+                                    className="bg-gray-300 text-black disabled:opacity-50"
+                                >
+                                    Previous
+                                </Button>
+                                <span className="text-sm text-gray-600">
+                                    Page {currentPage} of {totalPages}
+                                </span>
+                                <Button
+                                    onClick={handleNextPage}
+                                    disabled={currentPage === totalPages}
+                                    className="bg-gray-300 text-black disabled:opacity-50"
+                                >
+                                    Next
+                                </Button>
+                            </div>
                         )}
                     </div>
                 </div>

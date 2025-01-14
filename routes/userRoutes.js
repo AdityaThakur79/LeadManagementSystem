@@ -11,6 +11,7 @@ import {
   deleteUser,
   fetchUserById,
   getSupportAgents,
+  verifyOTPController,
 } from "../controllers/userController.js";
 import express from "express";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
@@ -19,6 +20,7 @@ import upload from "../utils/multer.js";
 const router = express.Router();
 
 router.post("/register", registerController);
+router.post("/verify-otp", verifyOTPController);
 router.post("/login", loginContoller);
 router.post("/forgotpassword", forgotController);
 router.get("/logout", logoutController);

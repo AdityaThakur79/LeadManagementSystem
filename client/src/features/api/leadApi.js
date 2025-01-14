@@ -22,8 +22,10 @@ export const leadApi = createApi({
 
     // Get all leads
     getAllLeads: builder.query({
-      query: () => ({
-        url: "/leads",
+      query: ({ page, limit, search = "" }) => ({
+        url: `/leads?page=${page}&limit=${limit}&search=${encodeURIComponent(
+          search
+        )}`,
         method: "GET",
       }),
       providesTags: ["Lead", "Refetch_Lead"],
@@ -45,7 +47,7 @@ export const leadApi = createApi({
         method: "PUT",
         body: leadData,
       }),
-      invalidatesTags: ["Refetch_Lead"]
+      invalidatesTags: ["Refetch_Lead"],
     }),
 
     // Delete a lead
@@ -54,7 +56,7 @@ export const leadApi = createApi({
         url: `/leads/${leadId}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["Refetch_Lead"]
+      invalidatesTags: ["Refetch_Lead"],
     }),
 
     // Get tags for a lead (optional, if needed)
@@ -70,10 +72,10 @@ export const leadApi = createApi({
     updateLeadStatus: builder.mutation({
       query: ({ leadId, status }) => ({
         url: `/leads/${leadId}/status`, // API route to update status
-        method: 'PUT',
+        method: "PUT",
         body: { status },
       }),
-      invalidatesTags: ["Refetch_Lead"]
+      invalidatesTags: ["Refetch_Lead"],
     }),
   }),
 });
@@ -87,5 +89,5 @@ export const {
   useDeleteLeadMutation,
   useGetTagsForLeadQuery,
   useGetLeadsAssignedToUserQuery,
-  useUpdateLeadStatusMutation
+  useUpdateLeadStatusMutation,
 } = leadApi;

@@ -63,7 +63,7 @@ const Courses = () => {
     const totalPages = Math.ceil(filteredLeads?.length / leadsPerPage);
 
     if (error) {
-        return <div className="text-center text-red-500">You are Super Admin</div>;
+        return <div className="text-center text-red-500">No Leads Assigned to You</div>;
     }
 
     return (

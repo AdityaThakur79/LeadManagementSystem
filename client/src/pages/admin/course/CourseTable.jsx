@@ -20,9 +20,9 @@ const ITEMS_PER_PAGE = 10; // Number of users per page
 
 const CourseTable = () => {
   const navigate = useNavigate();
-  const { data, isLoading, error } = useGetAllUsersQuery();
   const [selectedRole, setSelectedRole] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const { data, isLoading, error } = useGetAllUsersQuery({ page: currentPage, limit: ITEMS_PER_PAGE });
 
   if (isLoading) return <h1>Loading...</h1>;
   if (error) return <h1>Error fetching users: {error.message || 'Unknown error'}</h1>;
@@ -40,11 +40,8 @@ const CourseTable = () => {
 
   // Pagination logic
   const totalItems = filteredUsers?.length || 0;
-  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
-  const paginatedUsers = filteredUsers?.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  const totalPages = Math.ceil(data.totalUsers / ITEMS_PER_PAGE);
+
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -81,8 +78,8 @@ const CourseTable = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedUsers?.length > 0 ? (
-              paginatedUsers.map((user) => (
+            {data.users?.length > 0 ? (
+              data.users.map((user) => (
                 <TableRow key={user._id}>
                   <TableCell>{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
@@ -115,31 +112,24 @@ const CourseTable = () => {
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="flex justify-center mt-4">
-          <div className="flex gap-2">
-            <Button
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-            >
-              Previous
-            </Button>
-            {[...Array(totalPages).keys()].map((_, index) => (
-              <Button
-                key={index + 1}
-                onClick={() => handlePageChange(index + 1)}
-                variant={currentPage === index + 1 ? 'default' : 'ghost'}
-              >
-                {index + 1}
-              </Button>
-            ))}
-            <Button
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-            >
-              Next
-            </Button>
-          </div>
+        <div className="flex justify-between items-center p-4">
+          <Button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          <span>
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </Button>
         </div>
+
       )}
     </div>
   );

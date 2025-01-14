@@ -19,6 +19,7 @@ import {
 } from "../../../components/ui/table";
 import { Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const LeadTable = () => {
   const navigate = useNavigate();
@@ -26,9 +27,8 @@ const LeadTable = () => {
   const rowsPerPage = 10;
 
   // API calls
-  const { data: leadsData, isLoading: leadsLoading, error: leadsError } = useGetAllLeadsQuery();
-  const { data: tagsData, isLoading: tagsLoading, error: tagsError } = useGetAllTagsQuery();
   const { data: agentsData, isLoading: agentsLoading, error: agentsError } = useGetSupportAgentsQuery();
+  const { data: tagsData, isLoading: tagsLoading, error: tagsError } = useGetAllTagsQuery({ page: 1, limit: 50 });
 
   const [createLead, { isLoading: isCreatingLead }] = useCreateLeadMutation();
   const [updateLead] = useUpdateLeadMutation();
@@ -41,6 +41,7 @@ const LeadTable = () => {
     endDate: "",
   });
 
+  const { data: leadsData, isLoading: leadsLoading, error: leadsError } = useGetAllLeadsQuery({ page: currentPage, limit: rowsPerPage, search: filters.search });
   const [file, setFile] = useState(null);
 
   // Handle filter changes
@@ -62,9 +63,6 @@ const LeadTable = () => {
     Papa.parse(file, {
       complete: async (result) => {
         const leads = result.data;
-        // Here, you would map the CSV data into the structure required by your API
-        // Assuming the CSV data has fields like: name, email, phone, source, etc.
-
         for (const lead of leads) {
           const leadData = {
             name: lead.name,
@@ -73,13 +71,13 @@ const LeadTable = () => {
             source: lead.source,
             status: lead.status,
             comment: lead.comment,
-            assignedTo: lead.assignedTo, // Assuming this is handled correctly
+            assignedTo: lead.assignedTo,
           };
           await createLead(leadData);
         }
         alert("Leads imported successfully!");
       },
-      header: true, // If your CSV has headers
+      header: true,
     });
   };
 
@@ -102,8 +100,7 @@ const LeadTable = () => {
   });
 
   const startIndex = (currentPage - 1) * rowsPerPage;
-  const paginatedLeads = filteredLeads?.slice(startIndex, startIndex + rowsPerPage);
-  const totalPages = Math.ceil((filteredLeads?.length || 0) / rowsPerPage);
+  const totalPages = Math.ceil((leadsData?.totalLeads || 0) / rowsPerPage);
 
   const handleExportCSV = () => {
     const csv = Papa.unparse(filteredLeads);
@@ -132,30 +129,45 @@ const LeadTable = () => {
         source: existingLead.source,
         status: existingLead.status,
         comment: existingLead.comment,
-        assignedTo: newAgentId,
+        assignedTo: newAgentId === "null" ? null : newAgentId,
       };
 
       await updateLead({ leadId, leadData }).unwrap();
-      alert("Assigned agent updated successfully!");
+      toast.success("Assigned agent updated successfully!");
     } catch (err) {
       console.error("Error updating agent:", err);
-      alert("Failed to update assigned agent.");
+      toast.success("Failed to update assigned agent.");
     }
   };
 
   return (
-    <div className="p-6">
-      <Button onClick={() => navigate("/admin/lead/create")} className="mb-6">
-        Create a New Lead
-      </Button>
+    <div className="p-2">
+      <div className="flex flex-wrap items-center">
+        <Button
+          onClick={() => navigate("/admin/lead/create")}
+          className="mb-6 sm:mb-0"
+        >
+          Create a New Lead
+        </Button>
+
+        <input
+          type="text"
+          name="search"
+          value={filters.search}
+          placeholder="Search by Name/Email/Phone"
+          onChange={handleInputChange}
+          className="p-2 border rounded-lg bg-gray-500 w-full sm:w-[50%] ml-2"
+        />
+      </div>
+
 
       {/* Filters */}
-      <div className="filters mb-6 grid grid-cols-2 gap-">
+      <div className="filters mb-6 grid grid-cols-3 gap-1">
         <select
           name="status"
           value={filters.status}
           onChange={handleInputChange}
-          className="p-2 border rounded-lg bg-gray-500"
+          className="p-2 border rounded-lg bg-gray-500 mr-4 mt-4"
         >
           <option value="">All Statuses</option>
           <option value="New">New</option>
@@ -168,7 +180,7 @@ const LeadTable = () => {
           name="tags"
           value={filters.tags}
           onChange={handleInputChange}
-          className="p-2 border rounded-lg bg-gray-500"
+          className="p-2 border rounded-lg bg-gray-500 mr-4 mt-4 "
         >
           <option value="">All Tags</option>
           {tagsData?.tags.map((tag) => (
@@ -181,7 +193,7 @@ const LeadTable = () => {
           name="assignedAgent"
           value={filters.assignedAgent}
           onChange={handleInputChange}
-          className="p-2 border rounded-lg bg-gray-500"
+          className="p-2 border rounded-lg bg-gray-500 mr-4 mt-4 "
         >
           <option value="">All Agents</option>
           {agentsData?.map((agent) => (
@@ -190,47 +202,40 @@ const LeadTable = () => {
             </option>
           ))}
         </select>
-        <input
-          type="text"
-          name="search"
-          value={filters.search}
-          placeholder="Search by Name/Email/Phone"
-          onChange={handleInputChange}
-          className="p-2 border rounded-lg bg-gray-500"
-        />
+      </div>
+
+      {/* Import CSV */}
+      <div className="mb-2">
+          <input
+            type="file"
+            accept=".csv"
+            onChange={handleFileChange}
+            className="p-2 border rounded-lg bg-gray-500 mb-4"
+          />
+          <Button onClick={handleImportCSV} className="mt-2 ml-2">
+            Import Leads from CSV
+          </Button>
+
         <input
           type="date"
           name="startDate"
           value={filters.startDate}
           onChange={handleInputChange}
-          className="p-2 border rounded-lg bg-gray-500"
+          className="p-2 border rounded-lg bg-gray-500 m-4"
         />
         <input
           type="date"
           name="endDate"
           value={filters.endDate}
           onChange={handleInputChange}
-          className="p-2 border rounded-lg bg-gray-500"
+          className="p-2 border rounded-lg bg-gray-500 m-4"
         />
-      </div>
 
-      {/* Import CSV */}
-      <div className="mb-6">
-        <input
-          type="file"
-          accept=".csv"
-          onChange={handleFileChange}
-          className="p-2 border rounded-lg bg-gray-500"
-        />
-        <Button onClick={handleImportCSV} className="ml-2">
-          Import Leads from CSV
+        <Button onClick={handleExportCSV} className="mb-6">
+          Export to CSV
         </Button>
       </div>
 
-      {/* Export CSV */}
-      <Button onClick={handleExportCSV} className="mb-6">
-        Export to CSV
-      </Button>
 
       {/* Table */}
       <Table>
@@ -247,7 +252,7 @@ const LeadTable = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {paginatedLeads?.map((lead, index) => (
+          {filteredLeads.map((lead, index) => (
             <TableRow key={lead._id}>
               <TableCell>{startIndex + index + 1}</TableCell>
               <TableCell>{lead.name}</TableCell>
@@ -257,17 +262,18 @@ const LeadTable = () => {
               <TableCell>{lead.status}</TableCell>
 
               <select
-                value={lead.assignedTo?._id || ""}
+                value={lead.assignedTo?._id || "null"}
                 onChange={(e) => handleAgentChange(lead._id, e.target.value)}
                 className="border rounded p-1 bg-gray-500"
               >
-                <option value="">Not Assigned</option>
+                <option value="null">Not Assigned</option>
                 {agentsData?.map((agent) => (
                   <option key={agent._id} value={agent._id}>
                     {agent.name}
                   </option>
                 ))}
               </select>
+
               <TableCell>
                 <div className="flex gap-2">
                   <Button
@@ -294,7 +300,7 @@ const LeadTable = () => {
           Next
         </Button>
       </div>
-    </div>
+    </div >
   );
 };
 

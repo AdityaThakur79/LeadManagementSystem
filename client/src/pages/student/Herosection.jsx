@@ -7,16 +7,8 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const Herosection = () => {
     const { user } = useSelector(store => store.auth)
-    const [searchQuery, setSearchQuery] = useState("");
-
     const navigate = useNavigate();
-    const searchHandler = (e) => {
-        e.preventDefault();
-        if (searchQuery.trim() !== "") {
-            navigate(`/course/search?query=${searchQuery}`)
-        }
-        setSearchQuery("");
-    }
+     
 
 
     return (
@@ -27,17 +19,16 @@ const Herosection = () => {
                         Assigned Lead
                     </h1>
                     <p className="text-gray-200 dark:text-gray-400 mb-8">
-                        Discover, Learn, and Upskill with our wide range of courses
-                    </p>
-                    {user.role == "superAdmin" && (
+                        Manage, Track, and Enhance Leads with Our Comprehensive Lead Management System                    </p>
+                    {/* {user.role == "superAdmin" && (
                         <>
-                            <h1>You are a Super Admin
+                            <h1>You are a {user.role}
                             </h1>
-                           <Link to="allleads">
-                           <Button className="mt-4">See All Leads</Button>
-                           </Link>  
-                            </>
-                    )}
+                            <Link to="allleads">
+                                <Button className="mt-4">See All Leads</Button>
+                            </Link>
+                        </>
+                    )} */}
                 </div>
             </div>
 

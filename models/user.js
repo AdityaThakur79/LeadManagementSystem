@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: ["superAdmin", "subAdmin", "supportAgent"],
-      default: "Support Agent",
+      default: "supportAgent",
     },
     photoUrl: {
       type: String,
@@ -26,6 +26,18 @@ const userSchema = new mongoose.Schema(
     answer: {
       type: String,
       required: true,
+    },
+    status: {
+      type: Boolean,
+      default: false,
+    },
+    otp: {
+      type: String,
+      default: null,
+    },
+    otpExpiry: {
+      type: Date,
+      default: null,
     },
   },
   { timestamps: true }

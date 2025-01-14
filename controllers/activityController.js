@@ -3,13 +3,18 @@ import { ActivityLog } from "../models/activityModel.js";
 export const getActivityLog = async (req, res) => {
   try {
     // Get last 10 logs and populate user and lead data
-    const logs = await ActivityLog.find()
-      .sort({ timestamp: -1 })
-      .limit(10)
-      .populate("userId", "name email") // Specify the fields to populate from the User model (e.g., name, email)
-      .populate("leadId", "name email"); // Specify the fields to populate from the Lead model (e.g., title, description)
 
-    res.json(logs);
+    const { page = 1, limit = 10 } = req.query;
+    const skip = Number((page - 1) * limit);
+    const logs = await ActivityLog.find()
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .populate("userId", "name email")
+      .populate("leadId", "name email")
+      .skip(skip)
+      .limit(limit);
+    const totalLogs = await ActivityLog.countDocuments();
+    res.status(200).json({ logs, totalLogs });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

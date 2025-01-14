@@ -3,6 +3,7 @@ import isAuthenticated from "../middlewares/isAuthenticated.js";
 import {
   addCommentController,
   deleteCommentController,
+  editComment,
   getCommentController,
 } from "../controllers/commentController.js";
 const router = express.Router();
@@ -10,10 +11,13 @@ const router = express.Router();
 // Add a comment
 router.post("/add/:leadId", isAuthenticated, addCommentController);
 
-// Delete a comment (Admin only)
-router.delete("/delete/:leadId", isAuthenticated, deleteCommentController);
+// Delete a comment
+router.delete("/delete/:commentId", isAuthenticated, deleteCommentController);
 
-// Fetch comments by courseId
+// Fetch comments by LeadId
 router.get("/:leadId/comments", isAuthenticated, getCommentController);
+
+//Edit Comment by CommentId
+router.put("/edit/:commentId", editComment);
 
 export default router;

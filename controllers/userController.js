@@ -2,34 +2,95 @@ import { User } from "../models/user.js";
 import bcrypt from "bcryptjs";
 import { generateToken } from "../utils/generateToken.js";
 import { deleteMediaFromCloudinary, uploadMedia } from "../utils/cloudinary.js";
+import { userSchema } from "../validationSchema/validationSchema.js";
+import { ActivityLog } from "../models/activityModel.js";
+import { configDotenv } from "dotenv";
+import nodemailer from "nodemailer";
 
-// Register
+const pendingUsers = new Map();
+
+const generateOTP = () =>
+  Math.floor(100000 + Math.random() * 900000).toString();
+
+// Function to send OTP via email
+const sendOTPEmail = async (email, otp) => {
+  try {
+    let transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        user: "adityathakur80070@gmail.com",
+        pass: "pmjf vmqu pxqf mxnf",
+      },
+    });
+
+    let mailOptions = {
+      from: "leadmanagementapp@gmail.com",
+      to: email,
+      subject: "Your OTP Code",
+      text: `Your OTP code is: ${otp}`,
+    };
+
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error("Error sending OTP email:", error);
+    throw error;
+  }
+};
+
+//Register
 export const registerController = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    if (!name || !email || !password) {
+    const { error } = userSchema.validate(req.body);
+    if (error) {
+      return res
+        .status(400)
+        .send({ message: "Validation Error", details: error.details });
+    }
+
+    const { name, email, password, answer } = req.body;
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
       return res.status(400).json({
         success: false,
-        message: "All fields are required.",
+        message: "User already exists with this email.",
       });
     }
-    const user = await User.findOne({ email });
-    if (user) {
+
+    // Check if a pending user already exists for this email
+    if (pendingUsers.has(email)) {
       return res.status(400).json({
         success: false,
-        message: "User already exist with this email.",
+        message: "OTP already sent. Please verify your email.",
       });
     }
+
+    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({
+
+    // Generate OTP
+    const otp = generateOTP();
+
+    // Store user details and OTP temporarily
+    pendingUsers.set(email, {
       name,
       email,
-      password: hashedPassword,
+      hashedPassword,
+      answer,
+      otp,
+      otpExpiry: Date.now() + 10 * 60 * 1000,
     });
-    return res.status(201).json({
+
+    // Send OTP email
+    await sendOTPEmail(email, otp);
+
+    return res.status(200).json({
       success: true,
-      message: "Account created successfully.",
-      newUser,
+      message:
+        "Account created successfully. Please verify your email with the OTP sent.",
     });
   } catch (error) {
     console.log(error);
@@ -40,15 +101,60 @@ export const registerController = async (req, res) => {
   }
 };
 
+// Verify OTP Controller
+export const verifyOTPController = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    // Check if the email exists in pending users
+    if (!pendingUsers.has(email)) {
+      return res
+        .status(400)
+        .json({ message: "No registration found for this email" });
+    }
+
+    const pendingUser = pendingUsers.get(email);
+
+    // Validate OTP
+    if (pendingUser.otp !== otp || Date.now() > pendingUser.otpExpiry) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    // Create the user in the database
+    const newUser = await User.create({
+      name: pendingUser.name,
+      email: pendingUser.email,
+      password: pendingUser.hashedPassword,
+      answer: pendingUser.answer,
+      status: true,
+    });
+
+    // Remove the user from pending list
+    pendingUsers.delete(email);
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP verified successfully. User registered!",
+      user: newUser,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
 //Login
 export const loginContoller = async (req, res) => {
   try {
+    // const { error } = userSchema.validate(req.body);
+    // if (error) {
+    //   return res
+    //     .status(400)
+    //     .send({ message: "Validation Error", details: error.details });
+    // }
+
     const { email, password } = req.body;
     if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "All fields are required.",
-      });
+      return res.status(400).json({ message: "All Fields are required" });
     }
     const user = await User.findOne({ email });
     if (!user) {
@@ -203,6 +309,12 @@ export const forgotController = async (req, res) => {
 
 export const createUser = async (req, res) => {
   try {
+    const { error } = userSchema.validate(req.body);
+    if (error) {
+      return res
+        .status(400)
+        .send({ message: "Validation Error", details: error.details });
+    }
     const { name, email, password, role, answer } = req.body;
 
     if (!name || !email || !password || !role || !answer) {
@@ -225,8 +337,17 @@ export const createUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        answer: user.answer,
       },
     });
+
+    const activityLog = new ActivityLog({
+      userId: req.id,
+      leadId: null,
+      action: "created",
+      details: "New User Created",
+    });
+    activityLog.save();
   } catch (error) {
     res.status(500).json({ message: "Error creating user", error });
   }
@@ -234,6 +355,12 @@ export const createUser = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   try {
+    const { error } = userSchema.validate(req.body);
+    if (error) {
+      return res
+        .status(400)
+        .send({ message: "Validation Error", details: error.details });
+    }
     const { id } = req.params;
     const { name, email, role, answer } = req.body;
 
@@ -252,6 +379,13 @@ export const updateUser = async (req, res) => {
       message: "User updated successfully",
       user,
     });
+    const activityLog = new ActivityLog({
+      userId: req.id,
+      leadId: null,
+      action: "created",
+      details: "New User Created",
+    });
+    activityLog.save();
   } catch (error) {
     res.status(500).json({
       message: "Error updating user",
@@ -274,6 +408,13 @@ export const deleteUser = async (req, res) => {
     res.status(200).json({
       message: "User deleted successfully",
     });
+    const activityLog = new ActivityLog({
+      userId: req.id,
+      leadId: id || null,
+      action: "created",
+      details: "User Deleted",
+    });
+    activityLog.save();
   } catch (error) {
     res.status(500).json({
       message: "Error deleting user",
@@ -303,11 +444,17 @@ export const fetchUserById = async (req, res) => {
 export const getAllUsers = async (req, res) => {
   try {
     // Fetch all users sorted by createdAt in descending order
-    const users = await User.find().sort({ createdAt: -1 });
-
+    const { page = 1, limit = 1 } = req.query;
+    const skip = Number((page - 1) * limit);
+    const users = await User.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit));
+    const totalUsers = await User.countDocuments();
     res.status(200).json({
       message: "Users fetched successfully",
       users,
+      totalUsers,
     });
   } catch (error) {
     res.status(500).json({

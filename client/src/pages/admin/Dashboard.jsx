@@ -5,9 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useGetSupportAgentsQuery } from '@/features/api/authApi';
 
 const Dashboard = () => {
-    const { data: leadsData = [], isSuccess, isError, isLoading } = useGetAllLeadsQuery();
+    const { data: leadsData = [], isSuccess, isError, isLoading } = useGetAllLeadsQuery({ page: 1, limit: 50 });
     const { data: agentsData } = useGetSupportAgentsQuery();
- 
+
     const lead = leadsData?.leads;
 
     // Check if leadsData is an array, else return empty array
@@ -40,9 +40,9 @@ const Dashboard = () => {
     // Process leadsData to get the counts of each lead tag
     const processTagData = () => {
         const tagCounts = leads.reduce((acc, lead) => {
-            if (Array.isArray(lead.tags)) { // Ensure tags is an array
+            if (Array.isArray(lead.tags)) {
                 lead.tags.forEach(tag => {
-                    if (tag.name) { // Ensure tag has a name property
+                    if (tag.name) {
                         acc[tag.name] = (acc[tag.name] || 0) + 1;
                     }
                 });
@@ -65,13 +65,13 @@ const Dashboard = () => {
     if (isError) return <p>Error fetching data</p>;
 
     return (
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 p-4">
             <Card>
                 <CardHeader>
                     <CardTitle>Total Leads</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-3xl font-bold text-blue-600">{totalLeads}</p>
+                    <p className="text-3xl font-bold text-blue-600 text-center">{totalLeads}</p>
                 </CardContent>
             </Card>
             <Card>
@@ -79,7 +79,7 @@ const Dashboard = () => {
                     <CardTitle>Total Support Agents</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-3xl font-bold text-blue-600">{totalAgents}</p>
+                    <p className="text-3xl font-bold text-blue-600 text-center">{totalAgents}</p>
                 </CardContent>
             </Card>
 
@@ -88,8 +88,8 @@ const Dashboard = () => {
                     <CardTitle>Lead Status Overview</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div style={{ width: "50%", margin: "0 auto" }}>
-                        <PieChart width={400} height={400}>
+                    <div className="flex justify-center">
+                        <PieChart width={300} height={300}>
                             <Pie data={statusChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100}>
                                 {statusChartData.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -107,8 +107,8 @@ const Dashboard = () => {
                     <CardTitle>Lead Source Overview</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div style={{ width: "50%", margin: "0 auto" }}>
-                        <PieChart width={400} height={400}>
+                    <div className="flex justify-center">
+                        <PieChart width={300} height={300}>
                             <Pie data={sourceChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100}>
                                 {sourceChartData.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -121,16 +121,15 @@ const Dashboard = () => {
                 </CardContent>
             </Card>
 
-            {/* Bar Graph for Tags */}
             <Card className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4">
                 <CardHeader>
                     <CardTitle>Lead Tags Overview</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div style={{ width: "80%", margin: "0 auto" }}>
+                    <div className="flex justify-center overflow-x-auto">
                         <BarChart
-                            width={600}
-                            height={400}
+                            width={400}
+                            height={300}
                             data={tagChartData}
                             margin={{
                                 top: 5,

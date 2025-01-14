@@ -9,6 +9,7 @@ import { useCreateLeadMutation } from "@/features/api/leadApi";
 import { useGetSupportAgentsQuery } from "@/features/api/authApi";
 import { useGetAllTagsQuery } from "@/features/api/tagApi";
 import { toast } from "sonner";
+import Selectt from "react-select";
 
 const AddLead = () => {
   const [name, setName] = useState("");
@@ -16,18 +17,18 @@ const AddLead = () => {
   const [phone, setPhone] = useState("");
   const [source, setSource] = useState("website");
   const [status, setStatus] = useState("New");
-  const [assignedTo, setAssignedTo] = useState("");
+  const [assignedTo, setAssignedTo] = useState(null);
   const [tags, setTags] = useState([]);
-  const [comment, setComment] = useState(""); // New state for comment
+  const [comment, setComment] = useState("");
 
   const { data: supportAgents, isLoading: agentsLoading, error: agentsError } = useGetSupportAgentsQuery();
-  const { data: tagsData, isLoading: tagsLoading, error: tagsError } = useGetAllTagsQuery();
+  const { data: tagsData, isLoading: tagsLoading, error: tagsError } = useGetAllTagsQuery({ page: 1, limit: 50 });
   const [createLead, { data, isLoading, error, isSuccess }] = useCreateLeadMutation();
   const navigate = useNavigate();
 
   const createLeadHandler = async () => {
     try {
-      await createLead({ name, email, phone, source, status, assignedTo, tags, comment }).unwrap(); // Include comment
+      await createLead({ name, email, phone, source, status, assignedTo, tags }).unwrap(); // Include comment
       navigate("/admin/lead");
     } catch (err) {
       console.error(err);
@@ -40,7 +41,7 @@ const AddLead = () => {
       navigate("/admin/lead");
     }
     if (error) {
-      toast.error(error?.data?.message || "Failed to create lead");
+      toast.error(error?.data?.details[0].message || "Failed to create lead");
     }
   }, [isSuccess, error]);
 
@@ -70,11 +71,21 @@ const AddLead = () => {
     { label: "Won", value: "Won" },
   ];
 
+  const handleTagsChange = (selectedOptions) => {
+    const selectedTags = selectedOptions ? selectedOptions.map((option) => option.value) : [];
+    setTags(selectedTags);
+  };
+
+  const tagOptions = tagsData?.tags?.map((tag) => ({
+    value: tag._id,
+    label: tag.name,
+  })) || [];
+
   return (
-    <div className="flex-1 mx-10">
+    <div className="p-4 sm:p-6 lg:p-10">
       <div className="mb-4">
-        <h1 className="font-bold text-xl">Add Lead</h1>
-        <p className="text-sm">Create a new lead by providing their details and assigning relevant information.</p>
+        <h1 className="font-bold text-xl sm:text-2xl">Add Lead</h1>
+        <p className="text-sm sm:text-base">Create a new lead by providing their details and assigning relevant information.</p>
       </div>
       <div className="space-y-4">
         {/* Name Field */}
@@ -85,6 +96,7 @@ const AddLead = () => {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Full Name"
+            className="w-full"
           />
         </div>
 
@@ -96,6 +108,7 @@ const AddLead = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email Address"
+            className="w-full"
           />
         </div>
 
@@ -107,14 +120,15 @@ const AddLead = () => {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="Phone Number"
+            className="w-full"
           />
         </div>
 
         {/* Source Field */}
         <div>
           <Label>Source</Label>
-          <Select onValueChange={(value) => setSource(value)} value={source}>
-            <SelectTrigger className="w-[180px]">
+          <Select onValueChange={(value) => setSource(value)} value={source} className="w-full">
+            <SelectTrigger>
               <SelectValue placeholder="Select a source" />
             </SelectTrigger>
             <SelectContent>
@@ -130,11 +144,24 @@ const AddLead = () => {
           </Select>
         </div>
 
+        {/* Tags Field */}
+        <div>
+          <Label>Tags</Label>
+          <Selectt
+            isMulti
+            options={tagOptions}
+            value={tagOptions.filter(option => tags.includes(option.value))}
+            onChange={handleTagsChange}
+            placeholder="Select"
+            className="w-full"
+          />
+        </div>
+
         {/* Status Field */}
         <div>
           <Label>Status</Label>
-          <Select onValueChange={(value) => setStatus(value)} value={status}>
-            <SelectTrigger className="w-[180px]">
+          <Select onValueChange={(value) => setStatus(value)} value={status} className="w-full">
+            <SelectTrigger>
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
@@ -153,8 +180,8 @@ const AddLead = () => {
         {/* Assigned To Field */}
         <div>
           <Label>Assigned To (Support Agent)</Label>
-          <Select onValueChange={(value) => setAssignedTo(value)} value={assignedTo}>
-            <SelectTrigger className="w-[180px]">
+          <Select onValueChange={(value) => setAssignedTo(value)} value={assignedTo} className="w-full">
+            <SelectTrigger>
               <SelectValue placeholder="Select Support Agent" />
             </SelectTrigger>
             <SelectContent>
@@ -176,50 +203,8 @@ const AddLead = () => {
           </Select>
         </div>
 
-        {/* Comment Field */}
-        <div>
-          <Label>Comment</Label>
-          <Input
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Add a comment (optional)"
-          />
-        </div>
-
-        {/* Tags Field */}
-        <div>
-          <Label>Tags</Label>
-          <Select
-            multiple
-            value={tags}
-            onValueChange={(selectedTags) => setTags(selectedTags)}
-            placeholder="Select tags"
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select tags" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Tags</SelectLabel>
-                {tagsLoading ? (
-                  <SelectItem value="loading" disabled>
-                    Loading tags...
-                  </SelectItem>
-                ) : (
-                  tagsData?.tags?.map((tag) => (
-                    <SelectItem key={tag._id} value={tag._id}>
-                      {tag.name}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
-
-
         {/* Action Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-2">
           <Button variant="outline" onClick={() => navigate("/admin/lead")}>Back</Button>
           <Button disabled={isLoading} onClick={createLeadHandler}>
             {isLoading ? (

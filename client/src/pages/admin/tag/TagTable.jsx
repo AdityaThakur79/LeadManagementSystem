@@ -16,21 +16,17 @@ import { Edit } from "lucide-react";
 
 const TagTable = () => {
   const navigate = useNavigate();
-  const { data, isLoading } = useGetAllTagsQuery();
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
-
+  const itemsPerPage = 10;
+  const { data, isLoading } = useGetAllTagsQuery({ page: currentPage, limit: itemsPerPage });
   if (isLoading) return <h1>Loading...</h1>;
 
   // Calculate pagination details
   const tags = data?.tags || [];
-  const totalPages = Math.ceil(tags.length / itemsPerPage);
-  const currentData = tags.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const totalPages = Math.ceil(data.totalTags / itemsPerPage);
+
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
@@ -51,7 +47,7 @@ const TagTable = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {currentData.map((tag, index) => (
+          {data.tags.map((tag, index) => (
             <TableRow key={tag._id}>
               <TableCell>{(currentPage - 1) * itemsPerPage + index + 1}</TableCell>
               <TableCell>{tag.name}</TableCell>
@@ -67,25 +63,18 @@ const TagTable = () => {
             </TableRow>
           ))}
         </TableBody>
-       
-      <div className="flex justify-between items-center p-4">
-        <Button
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-        >
-          Previous
-        </Button>
+      </Table>
+      {/* Pagination */}
+      <div className="pagination mt-4 flex justify-center items-center space-x-2">
+        <Button onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}>Previous</Button>
         <span>
           Page {currentPage} of {totalPages}
         </span>
-        <Button
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-        >
+        <Button onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}>
           Next
         </Button>
       </div>
-      </Table>
+
 
     </div>
   );

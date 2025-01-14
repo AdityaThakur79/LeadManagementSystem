@@ -11,10 +11,14 @@ const leadSchema = new mongoose.Schema({
     default: "New",
   },
   tags: [{ type: mongoose.Schema.Types.ObjectId, ref: "Tag" }],
-  comment: { type: String },
-  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+
+  assignedTo: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null,
+  },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
 
-export const Lead = mongoose.model("Lead",leadSchema )
+export const Lead = mongoose.model("Lead", leadSchema);

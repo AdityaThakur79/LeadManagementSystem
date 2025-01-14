@@ -47,17 +47,18 @@ function Login() {
 
     useEffect(() => {
         if (registerIsSucess && registerData) {
-            toast.success(registerData.message || "Signup successful.")
+            toast.success(registerData.message || "Signup successful.");
+            navigate("/verify-otp", { state: { email: signupInput.email } }); 
         }
         if (registerError) {
-            toast.error(registerError.data.message || "Signup Failed");
+            toast.error(registerError.data.details[0].message || "Signup Failed");
         }
         if (loginIsSucess && loginData) {
             toast.success(loginData.message || "Login successful.")
-            navigate("/");
+            navigate("/profile");
         }
         if (loginError) {
-            toast.error(loginError.data.message || "login Failed");
+            toast.error(loginError.data.details[0].message || "login Failed");
         }
     }, [loginIsLoading.registerIsLoading, loginData, registerData, loginError, registerError])
 

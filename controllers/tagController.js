@@ -1,16 +1,19 @@
+import { ActivityLog } from "../models/activityModel.js";
 import { Course } from "../models/course.js";
 import { Tag } from "../models/tags.js";
+import { tagSchema } from "../validationSchema/validationSchema.js";
 
 // Create a new tag
 export const createTagController = async (req, res) => {
   try {
-    const { name } = req.body;
-
-    // Validation
-    if (!name) {
-      return res.status(400).send({ message: "Tag name is required" });
+    const { error } = tagSchema.validate(req.body);
+    if (error) {
+      return res
+        .status(400)
+        .json({ message: "Validation Error", details: error.details });
     }
 
+    const { name } = req.body;
     const existingTag = await Tag.findOne({ name });
     if (existingTag) {
       return res.status(400).send({ message: "Tag already exists" });
@@ -24,7 +27,15 @@ export const createTagController = async (req, res) => {
       message: "Tag created successfully",
       tag,
     });
+    const activityLog = new ActivityLog({
+      userId: req.id,
+      leadId: null,
+      action: "created",
+      details: "New Tag Created",
+    });
+    activityLog.save();
   } catch (error) {
+    console.log(error);
     res.status(500).send({
       success: false,
       message: "Error creating tag",
@@ -36,11 +47,21 @@ export const createTagController = async (req, res) => {
 // Get all tags
 export const getAllTagController = async (req, res) => {
   try {
-    const tags = await Tag.find();
+    const { page = 1, limit = 1 } = req.query;
+    const skip = Number((page - 1) * limit);
+
+    const tags = await Tag.find()
+      .skip(skip)
+      .limit(Number(limit))
+      .sort({ createdAt: -1 });
+
+    const totalTags = await Tag.countDocuments();
     res.status(200).send({
       success: true,
       message: "Tags fetched successfully",
       tags,
+      totalTags,
+      currentPage: Number(page),
     });
   } catch (error) {
     res.status(500).send({
@@ -90,6 +111,13 @@ export const updateTagController = async (req, res) => {
       message: "Tag updated successfully",
       tag,
     });
+    const activityLog = new ActivityLog({
+      userId: req.id,
+      leadId: null,
+      action: "updated",
+      details: "Tag Updated",
+    });
+    activityLog.save();
   } catch (error) {
     res.status(500).send({
       success: false,
@@ -111,6 +139,13 @@ export const deleteTagController = async (req, res) => {
       success: true,
       message: "Tag deleted successfully",
     });
+    const activityLog = new ActivityLog({
+      userId: req.id,
+      leadId: null,
+      action: "deleted",
+      details: "Tag Deleted",
+    });
+    activityLog.save();
   } catch (error) {
     res.status(500).send({
       success: false,

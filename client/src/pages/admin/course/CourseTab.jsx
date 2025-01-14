@@ -68,7 +68,7 @@ const EditCourse = () => {
             toast.success("User updated successfully.");
         }
         if (error) {
-            toast.error(error.data.message || "Failed to update user");
+            toast.error(error.data.details[0].message || "Failed to update user");
         }
     }, [isSuccess, error]);
 
